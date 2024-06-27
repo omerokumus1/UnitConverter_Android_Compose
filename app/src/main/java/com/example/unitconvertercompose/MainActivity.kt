@@ -4,9 +4,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,15 +29,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.unitconvertercompose.MainActivity.Companion.converterMatrix
 import com.example.unitconvertercompose.ui.theme.UnitConverterComposeTheme
 
 class MainActivity : ComponentActivity() {
-    companion object
-    {
+    companion object {
         val converterMatrix = mapOf(
             "Centimeters" to mapOf(
                 "Centimeters" to 1.0,
@@ -58,6 +55,7 @@ class MainActivity : ComponentActivity() {
             )
         )
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -83,6 +81,22 @@ fun UnitConverter() {
     val to = remember { mutableStateOf("") }
     val context = LocalContext.current
 
+    fun doConversion(
+    ) {
+        val value = valueToConvert.toDoubleOrNull() ?: run {
+            println("Invalid input")
+            Toast.makeText(context, "Invalid input", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val conversionFactor = converterMatrix[from.value]?.get(to.value)
+        if (conversionFactor != null) {
+            result = (value * conversionFactor).toString()
+        } else {
+            println("Conversion not supported")
+            Toast.makeText(context, "Conversion not supported", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -95,31 +109,25 @@ fun UnitConverter() {
             onValueChange = { valueToConvert = it },
             placeholder = {
                 Text(text = "Enter value to convert")
-            })
+            },
+            maxLines = 1)
         Spacer(modifier = Modifier.height(16.dp))
         Row {
             MetricsDropdownButton("From", from)
             Spacer(modifier = Modifier.width(16.dp))
             MetricsDropdownButton("To", to)
-
-
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            valueToConvert.toDoubleOrNull()?.let {
-                val conversionFactor = MainActivity.converterMatrix[from.value]?.get(to.value)
-                if (conversionFactor != null) {
-                    result = (it * conversionFactor).toString()
-                } else {
-                    Toast.makeText(context, "Conversion not supported", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }) {
+
+        Button(onClick = { doConversion() }) {
             Text(text = "Convert")
         }
-        Text(text = "Converted Value: $result ${to.value}")
+        Text(text = "Converted Value: $result ${to.value}", style = MaterialTheme.typography.bodyLarge)
     }
+
+
 }
+
 
 @Composable
 fun MetricsDropdownButton(text: String, selectedValue: MutableState<String>) {
